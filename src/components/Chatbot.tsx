@@ -11,11 +11,10 @@ import {
   Autocomplete,
   Select,
   MenuItem,
-  FormControl,
-  InputLabel
+  FormControl
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { ChatMessage, UserInput, Product, CalculationMethod, AgeGender, CalculationResult } from '../types';
+import { ChatMessage, UserInput, CalculationMethod, CalculationResult } from '../types';
 
 // Enhanced product list
 const PRODUCTS = [
