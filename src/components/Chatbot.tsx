@@ -16,7 +16,6 @@ import {
   Tooltip
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import { ChatMessage, UserInput, CalculationMethod, CalculationResult } from '../types';
 
@@ -227,23 +226,6 @@ const Chatbot = () => {
     setCurrentStep(prev => prev + 1);
   };
 
-  const handleSubmit = () => {
-    if (!inputValue.trim()) return;
-
-    const newMessage: ChatMessage = { type: 'user', content: inputValue };
-    setMessages(prev => [...prev, newMessage]);
-
-    if (currentStep === 2) { // Handling cartons per day input
-      setUserInput(prev => ({ ...prev, cartonsPerDay: Number(inputValue) }));
-      setMessages(prev => [...prev, {
-        type: 'bot',
-        content: 'Select patient\'s age and sex (Optional):',
-        showAgeSexSelector: true
-      }]);
-      setInputValue('');
-      setCurrentStep(prev => prev + 1);
-    }
-  };
 
   const calculateResults = (input: UserInput): CalculationResult => {
     // Mock calculations - replace with actual formulas
