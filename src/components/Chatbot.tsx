@@ -16,6 +16,7 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import { ChatMessage, UserInput, CalculationMethod, CalculationResult } from '../types';
 
+
 // Enhanced product list
 const PRODUCTS = [
   { category: 'Standard Formulas', items: [
