@@ -11,6 +11,8 @@ export interface ChatMessage {
   showProductSelector?: boolean;
   showAgeSexSelector?: boolean;
   showWeightInput?: boolean;
+  showCartonsInput?: boolean;
+  isDisclaimer?: boolean;
 }
 
 export interface CalculationResult {
