@@ -391,6 +391,7 @@ const Chatbot = () => {
             width: 32,
             height: 32,
             borderRadius: '50%'  // Make the image circular
+
           }}
         />
         <Typography variant="h6">Formula Calculator Demo</Typography>
@@ -431,9 +432,9 @@ const Chatbot = () => {
                       height: 32,
                       borderRadius: '50%',
                       position: 'absolute',
-                      left: -16,
-                      top: -16,
-                      border: '2px solid white',
+                      left: -1,
+                      top: -15,
+                      zIndex: 100,
                       padding: '1px'
                     }}
                   />
@@ -450,7 +451,7 @@ const Chatbot = () => {
                       position: 'relative',
                       borderRadius: 3,
                       ...(message.type === 'bot' && {
-                        pl: 1.75
+                        pl: 1.5
                       })
                     }}
                   >
