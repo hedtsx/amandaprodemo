@@ -13,6 +13,13 @@ export interface ChatMessage {
   showWeightInput?: boolean;
   showCartonsInput?: boolean;
   isDisclaimer?: boolean;
+  showSkipButton?: boolean;
+  showResults?: boolean;
+  results?: CalculationResult & {
+    productName: string;
+    productImage: string;
+    mlPerCarton: number;
+  };
 }
 
 export interface CalculationResult {

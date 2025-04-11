@@ -17,29 +17,29 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
+import DownloadIcon from '@mui/icons-material/Download';
 import { ChatMessage, UserInput, CalculationMethod, CalculationResult } from '../types';
 
 
 // Enhanced product list
-const PRODUCTS = [
-  { category: 'Standard Formulas', items: [
-    'Compleat® Pediatric Standard 1.0',
-    'Compleat® Original',
-    'Compleat® 1.5',
-    'Compleat® 2.0'
-  ]},
-  { category: 'Specialized Formulas', items: [
-    'Peptamen® 1.0',
-    'Peptamen® 1.5',
-    'Peptamen® AF',
-    'Peptamen® Intense VHP'
-  ]},
-  { category: 'Pediatric Formulas', items: [
-    'Compleat® Pediatric',
-    'Peptamen® Junior',
-    'Peptamen® Junior 1.5',
-    'Peptamen® Junior HP'
-  ]}
+interface ProductOption {
+  name: string;
+  imageUrl: string;
+}
+
+const PRODUCTS: ProductOption[] = [
+  {
+    name: 'Compleat Original',
+    imageUrl: 'https://www.nhsc-usa-cerebro.com/sites/default/files/Compleat%20Original%201.0%208.45oz%20no%20new.png'
+  },
+  {
+    name: 'Compleat Pediatrics Original 1.5',
+    imageUrl: 'https://www.nhsc-usa-cerebro.com/sites/default/files/Compleat%20Pediatric%20Original%201.5.png'
+  },
+  {
+    name: 'Compleat Peptide 1.0',
+    imageUrl: 'https://www.nhsc-usa-cerebro.com/sites/default/files/Compleat%20Peptide%201.0%208.45oz%20no%20new.png'
+  }
 ];
 
 // Enhanced age/sex combinations
@@ -103,7 +103,7 @@ const Chatbot = () => {
     ]);
   }, []);
 
-  const handleProductSelect = (product: string | null) => {
+  const handleProductSelect = (product: ProductOption | null) => {
     if (!product) return;
     
     // First, hide the product selector
@@ -112,14 +112,14 @@ const Chatbot = () => {
     ));
     // Then add the new messages
     setMessages(prev => [...prev, 
-      { type: 'user', content: product },
+      { type: 'user', content: product.name },
       {
         type: 'bot',
         content: 'Choose calculation method:',
         options: ['Calories/Day', 'Volume/Day', 'Cartons/Day']
       }
     ]);
-    setUserInput(prev => ({ ...prev, product }));
+    setUserInput(prev => ({ ...prev, product: product.name }));
     setCurrentStep(1);
   };
 
@@ -175,10 +175,40 @@ const Chatbot = () => {
       {
         type: 'bot',
         content: 'Select patient\'s age and sex (Optional):',
-        showAgeSexSelector: true
+        showAgeSexSelector: true,
+        showSkipButton: true
       }
     ]);
     setCartonsInput('');
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const handleSkipAgeSex = () => {
+    setMessages(prev => prev.map((msg, idx) => 
+      idx === prev.length - 1 ? { ...msg, showAgeSexSelector: false, showSkipButton: false } : msg
+    ));
+    setMessages(prev => [...prev,
+      { type: 'user', content: 'Skipped' },
+      {
+        type: 'bot',
+        content: 'Enter patient\'s weight (Optional):',
+        showWeightInput: true,
+        showSkipButton: true
+      }
+    ]);
+    setCurrentStep(4);
+  };
+
+  const handleSkipWeight = () => {
+    setMessages(prev => prev.map((msg, idx) => 
+      idx === prev.length - 1 ? { ...msg, showWeightInput: false, showSkipButton: false } : msg
+    ));
+    setMessages(prev => [...prev,
+      { type: 'user', content: 'Skipped' }
+    ]);
+    const results: CalculationResult = calculateResults(userInput);
+    displayResults(results);
+    setInputValue('');
     setCurrentStep(prev => prev + 1);
   };
 
@@ -188,7 +218,7 @@ const Chatbot = () => {
     setUserInput(prev => ({ ...prev, ageGender: ageSex }));
     // First, hide the age/sex selector
     setMessages(prev => prev.map((msg, idx) => 
-      idx === prev.length - 1 ? { ...msg, showAgeSexSelector: false } : msg
+      idx === prev.length - 1 ? { ...msg, showAgeSexSelector: false, showSkipButton: false } : msg
     ));
     // Then add the new messages
     setMessages(prev => [...prev, 
@@ -196,7 +226,8 @@ const Chatbot = () => {
       {
         type: 'bot',
         content: 'Enter patient\'s weight (Optional):',
-        showWeightInput: true
+        showWeightInput: true,
+        showSkipButton: true
       }
     ]);
     setCurrentStep(4);
@@ -237,12 +268,18 @@ const Chatbot = () => {
   };
 
   const displayResults = (results: CalculationResult) => {
+    const selectedProduct = PRODUCTS.find(p => p.name === userInput.product);
+    
     setMessages(prev => [...prev, {
       type: 'bot',
-      content: `Results:\n
-Total Daily Volume: ${results.totalDailyVolume}mL\n
-Total Daily Calories: ${results.totalDailyCalories}kcal\n
-Total Daily Protein: ${results.totalDailyProtein}g`
+      content: '',
+      showResults: true,
+      results: {
+        ...results,
+        productName: selectedProduct?.name || '',
+        productImage: selectedProduct?.imageUrl || '',
+        mlPerCarton: 250
+      }
     }]);
   };
 
@@ -280,11 +317,11 @@ Total Daily Protein: ${results.totalDailyProtein}g`
           );
         case 3: // Return to age/sex selection
           return newMessages.map((msg, idx) => 
-            idx === newMessages.length - 1 ? { ...msg, showAgeSexSelector: true } : msg
+            idx === newMessages.length - 1 ? { ...msg, showAgeSexSelector: true, showSkipButton: true } : msg
           );
         case 4: // Return to weight input
           return newMessages.map((msg, idx) => 
-            idx === newMessages.length - 1 ? { ...msg, showWeightInput: true } : msg
+            idx === newMessages.length - 1 ? { ...msg, showWeightInput: true, showSkipButton: true } : msg
           );
         default:
           return newMessages;
@@ -385,7 +422,7 @@ Total Daily Protein: ${results.totalDailyProtein}g`
                 width: '100%',
                 justifyContent: message.type === 'user' ? 'flex-end' : 'flex-start'
               }}>
-                {message.type === 'bot' && (
+                {message.type === 'bot' && !message.showResults && (
                   <Box
                     component="img"
                     src="/Bot Avatar.jpg"
@@ -401,57 +438,63 @@ Total Daily Protein: ${results.totalDailyProtein}g`
                     }}
                   />
                 )}
-                <Paper
-                  sx={{
-                    p: 1,
-                    bgcolor: message.type === 'user' ? '#F1F0F0' : '#00A67E',
-                    color: message.type === 'user' ? 'inherit' : 'white',
-                    maxWidth: '80%',
-                    position: 'relative',
-                    ...(message.type === 'bot' && {
-                      pl: 2
-                    })
-                  }}
-                >
-                  {index === messages.length - 1 && index > 1 && message.type === 'bot' && (
-                    <Tooltip title="Return to previous step" placement="top">
-                      <IconButton
-                        size="small"
-                        onClick={handleReturn}
-                        sx={{ 
-                          position: 'absolute',
-                          top: -20,
-                          right: 0,
-                          color: 'text.secondary',
-                          padding: '4px',
-                          '&:hover': {
-                            bgcolor: 'rgba(0, 0, 0, 0.04)'
-                          }
-                        }}
-                      >
-                        <KeyboardReturnIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      whiteSpace: 'pre-line',
-                      '& .highlight': {
-                        fontWeight: 'bold'
-                      }
+                {(!message.showResults || message.type === 'user') && (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      py: 0.75,
+                      px: 1.25,
+                      bgcolor: message.type === 'user' ? '#F1F0F0' : '#00A67E',
+                      color: message.type === 'user' ? 'inherit' : 'white',
+                      maxWidth: '80%',
+                      position: 'relative',
+                      borderRadius: 3,
+                      ...(message.type === 'bot' && {
+                        pl: 1.75
+                      })
                     }}
                   >
-                    {message.isDisclaimer ? (
-                      <>
-                        Welcome to the Nestlé Formula Calculator. Please note that{' '}
-                        <span className="highlight">this tool is not a generative AI chatbot</span>.
-                      </>
-                    ) : (
-                      message.content
+                    {index === messages.length - 1 && index > 1 && message.type === 'bot' && (
+                      <Tooltip title="Return to previous step" placement="top">
+                        <IconButton
+                          size="small"
+                          onClick={handleReturn}
+                          sx={{ 
+                            position: 'absolute',
+                            top: -20,
+                            right: 0,
+                            color: 'text.secondary',
+                            padding: '4px',
+                            '&:hover': {
+                              bgcolor: 'rgba(0, 0, 0, 0.04)'
+                            }
+                          }}
+                        >
+                          <KeyboardReturnIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     )}
-                  </Typography>
-                </Paper>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        whiteSpace: 'pre-line',
+                        fontSize: '0.875rem',
+                        '& .highlight': {
+                          fontWeight: 'bold'
+                        }
+                      }}
+                    >
+                      {message.isDisclaimer ? (
+                        <>
+                          Welcome to the Nestlé Formula Calculator. Please note that{' '}
+                          <span className="highlight">this tool is not a generative AI chatbot</span>.
+                        </>
+                      ) : (
+                        message.content
+                      )}
+                    </Typography>
+                  </Paper>
+                )}
               </Box>
               {message.showProductSelector && (
                 <Grow in={message.showProductSelector} timeout={500}>
@@ -463,10 +506,8 @@ Total Daily Protein: ${results.totalDailyProtein}g`
                     opacity: message.showProductSelector ? 1 : 0
                   }}>
                     <Autocomplete
-                      options={PRODUCTS.flatMap(category => category.items)}
-                      groupBy={(option) => 
-                        PRODUCTS.find(cat => cat.items.includes(option))?.category || ''
-                      }
+                      options={PRODUCTS}
+                      getOptionLabel={(option) => option.name}
                       renderInput={(params) => (
                         <TextField {...params} label="Select Product" variant="outlined" />
                       )}
@@ -485,17 +526,29 @@ Total Daily Protein: ${results.totalDailyProtein}g`
                     transform: message.showAgeSexSelector ? 'translateY(0)' : 'translateY(-20px)',
                     opacity: message.showAgeSexSelector ? 1 : 0
                   }}>
-                    <Autocomplete
-                      options={AGE_SEX_OPTIONS.flatMap(category => category.items)}
-                      groupBy={(option) => 
-                        AGE_SEX_OPTIONS.find(cat => cat.items.includes(option))?.category || ''
-                      }
-                      renderInput={(params) => (
-                        <TextField {...params} label="Select Age and Sex" variant="outlined" />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Autocomplete
+                        options={AGE_SEX_OPTIONS.flatMap(category => category.items)}
+                        groupBy={(option) => 
+                          AGE_SEX_OPTIONS.find(cat => cat.items.includes(option))?.category || ''
+                        }
+                        renderInput={(params) => (
+                          <TextField {...params} label="Select Age and Sex" variant="outlined" />
+                        )}
+                        onChange={(_, value) => handleAgeGenderSelect(value)}
+                        fullWidth
+                      />
+                      {message.showSkipButton && (
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={handleSkipAgeSex}
+                          sx={{ alignSelf: 'flex-end' }}
+                        >
+                          Skip
+                        </Button>
                       )}
-                      onChange={(_, value) => handleAgeGenderSelect(value)}
-                      fullWidth
-                    />
+                    </Box>
                   </Box>
                 </Grow>
               )}
@@ -503,37 +556,49 @@ Total Daily Protein: ${results.totalDailyProtein}g`
                 <Grow in={message.showWeightInput} timeout={500}>
                   <Box sx={{ 
                     mt: 1, 
-                    width: '100%', 
-                    display: 'flex', 
-                    gap: 1,
+                    width: '100%',
                     transition: 'all 0.5s ease-out',
                     transform: message.showWeightInput ? 'translateY(0)' : 'translateY(-20px)',
                     opacity: message.showWeightInput ? 1 : 0
                   }}>
-                    <TextField
-                      label="Weight"
-                      type="number"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleWeightSubmit(inputValue, weightUnit)}
-                      size="small"
-                      sx={{ flex: 1 }}
-                    />
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <Select
-                        value={weightUnit}
-                        onChange={(e) => setWeightUnit(e.target.value as 'kg' | 'lb')}
-                      >
-                        <MenuItem value="kg">kg</MenuItem>
-                        <MenuItem value="lb">lb</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <IconButton 
-                      color="primary" 
-                      onClick={() => handleWeightSubmit(inputValue, weightUnit)}
-                    >
-                      <SendIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <TextField
+                          label="Weight"
+                          type="number"
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleWeightSubmit(inputValue, weightUnit)}
+                          size="small"
+                          sx={{ flex: 1 }}
+                        />
+                        <FormControl size="small" sx={{ minWidth: 80 }}>
+                          <Select
+                            value={weightUnit}
+                            onChange={(e) => setWeightUnit(e.target.value as 'kg' | 'lb')}
+                          >
+                            <MenuItem value="kg">kg</MenuItem>
+                            <MenuItem value="lb">lb</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <IconButton 
+                          color="primary" 
+                          onClick={() => handleWeightSubmit(inputValue, weightUnit)}
+                        >
+                          <SendIcon />
+                        </IconButton>
+                      </Box>
+                      {message.showSkipButton && (
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={handleSkipWeight}
+                          sx={{ alignSelf: 'flex-end' }}
+                        >
+                          Skip
+                        </Button>
+                      )}
+                    </Box>
                   </Box>
                 </Grow>
               )}
@@ -590,6 +655,157 @@ Total Daily Protein: ${results.totalDailyProtein}g`
                     ))}
                   </Box>
                 </Grow>
+              )}
+              {message.showResults && message.results && (
+                <Box sx={{ 
+                  mt: 2,
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  bgcolor: 'white',
+                  borderRadius: 1,
+                  p: 2,
+                  boxShadow: 1
+                }}>
+                  <Typography variant="subtitle1" sx={{ textAlign: 'center', mb: 0.5, fontSize: '1rem' }}>
+                    {message.results.productName}
+                  </Typography>
+                  <Typography variant="body2" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary', fontSize: '0.75rem' }}>
+                    {message.results.mlPerCarton} mL/carton
+                  </Typography>
+                  
+                  <Box sx={{ 
+                    display: 'flex',
+                    width: '100%',
+                    gap: 4,
+                    mb: 2
+                  }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Box
+                        component="img"
+                        src={message.results.productImage}
+                        alt={message.results.productName}
+                        sx={{
+                          width: '100%',
+                          maxWidth: 150,
+                          height: 'auto',
+                          objectFit: 'contain'
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{ 
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1.5
+                    }}>
+                      <Box>
+                        <Typography sx={{ textAlign: 'left', color: '#00A67E', fontSize: '1.5rem', fontWeight: 500, lineHeight: 1.2 }}>
+                          {userInput.cartonsPerDay || 0}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                          Cartons per Day
+                        </Typography>
+                      </Box>
+                      
+                      <Box>
+                        <Typography sx={{ textAlign: 'left', color: '#00A67E', fontSize: '1rem', fontWeight: 500, lineHeight: 1.2 }}>
+                          {message.results.totalDailyVolume} mL
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                          Total Daily Volume
+                        </Typography>
+                      </Box>
+                      
+                      <Box>
+                        <Typography sx={{ textAlign: 'left', color: '#00A67E', fontSize: '1rem', fontWeight: 500, lineHeight: 1.2 }}>
+                          {message.results.totalDailyCalories} kcals
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                          Total Daily Calories
+                        </Typography>
+                      </Box>
+                      
+                      <Box>
+                        <Typography sx={{ textAlign: 'left', color: '#00A67E', fontSize: '1rem', fontWeight: 500, lineHeight: 1.2 }}>
+                          {message.results.totalDailyProtein}g
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                          Total Daily Protein
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    width: '100%',
+                    mt: 2
+                  }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      sx={{ 
+                        bgcolor: '#00A67E',
+                        '&:hover': {
+                          bgcolor: '#008C69'
+                        }
+                      }}
+                      startIcon={<Box component="span" sx={{ fontSize: '1.2rem' }}>✉</Box>}
+                    >
+                      Send Results via Email
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<DownloadIcon />}
+                      sx={{ 
+                        borderColor: '#00A67E',
+                        color: '#00A67E',
+                        '&:hover': {
+                          borderColor: '#008C69',
+                          color: '#008C69',
+                          bgcolor: 'rgba(0, 166, 126, 0.04)'
+                        }
+                      }}
+                    >
+                      Download PDF
+                    </Button>
+                    <Button
+                      variant="text"
+                      onClick={() => {
+                        setMessages([
+                          {
+                            type: 'bot',
+                            content: 'Welcome to the Nestlé Formula Calculator. Please note that this tool is not a generative AI chatbot.',
+                            isDisclaimer: true
+                          },
+                          {
+                            type: 'bot',
+                            content: 'Please select a product:',
+                            showProductSelector: true
+                          }
+                        ]);
+                        setUserInput({});
+                        setCurrentStep(0);
+                        setInputValue('');
+                        setCartonsInput('');
+                      }}
+                      sx={{ 
+                        color: '#00A67E',
+                        '&:hover': {
+                          color: '#008C69',
+                          bgcolor: 'rgba(0, 166, 126, 0.04)'
+                        }
+                      }}
+                    >
+                      Start Again
+                    </Button>
+                  </Box>
+                </Box>
               )}
             </ListItem>
           ))}
