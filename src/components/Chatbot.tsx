@@ -400,7 +400,8 @@ const Chatbot = () => {
       <Box sx={{ 
         flexGrow: 1, 
         overflow: 'auto',
-        p: 2,
+        py: 2,
+        pl:0.75,
         display: 'flex',
         flexDirection: 'column'
       }}>
@@ -510,7 +511,7 @@ const Chatbot = () => {
                       options={PRODUCTS}
                       getOptionLabel={(option) => option.name}
                       renderInput={(params) => (
-                        <TextField {...params} label="Select Product" variant="outlined" />
+                        <TextField {...params} label="Select Product" variant="outlined" size="small"/>
                       )}
                       onChange={(_, value) => handleProductSelect(value)}
                       fullWidth
