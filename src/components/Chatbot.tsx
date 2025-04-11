@@ -283,6 +283,18 @@ const Chatbot = () => {
     }]);
   };
 
+  const getInputLabel = () => {
+    switch (userInput.calculationMethod) {
+      case 'Calories/Day':
+        return 'Calories per day';
+      case 'Volume/Day':
+        return 'Volume per day (mL)';
+      default:
+        return 'Cartons per day';
+    }
+  };
+  
+
   const handleReturn = () => {
     // Remove the last two messages (user input and bot response)
     setMessages(prev => {
@@ -463,8 +475,8 @@ const Chatbot = () => {
                           onClick={handleReturn}
                           sx={{ 
                             position: 'absolute',
-                            top: -20,
-                            right: 0,
+                            top: 4,
+                            right: -40,
                             color: 'text.secondary',
                             padding: '4px',
                             '&:hover': {
@@ -500,19 +512,36 @@ const Chatbot = () => {
               </Box>
               {message.showProductSelector && (
                 <Grow in={message.showProductSelector} timeout={500}>
-                  <Box sx={{ 
-                    mt: 1, 
-                    width: '100%',
-                    transition: 'all 0.5s ease-out',
-                    transform: message.showProductSelector ? 'translateY(0)' : 'translateY(-20px)',
-                    opacity: message.showProductSelector ? 1 : 0
-                  }}>
+                  <Box
+                    sx={{
+                      mt: 1,
+                      width: '100%',
+                      display: 'flex',
+                      maxHeight: 30,
+                      transition: 'all 0.5s ease-out',
+                      transform: message.showProductSelector ? 'translateY(0)' : 'translateY(-20px)',
+                      opacity: message.showProductSelector ? 1 : 0,
+                    }}
+                  >
                     <Autocomplete
                       options={PRODUCTS}
                       getOptionLabel={(option) => option.name}
                       renderInput={(params) => (
-                        <TextField {...params} label="Select Product" variant="outlined" size="small"/>
+                        <TextField
+                          {...params}
+                          label="Select Product"
+                          variant="outlined"
+                          size="small"
+                          InputLabelProps={{
+                            style: { fontSize: '0.75rem', paddingTop: 2.5 }
+                          }}
+                        />
                       )}
+                      ListboxProps={{
+                        sx: {
+                          fontSize: '0.75rem' // Set the desired font size for all options here.
+                        }
+                      }}
                       onChange={(_, value) => handleProductSelect(value)}
                       fullWidth
                     />
@@ -524,6 +553,7 @@ const Chatbot = () => {
                   <Box sx={{ 
                     mt: 1, 
                     width: '100%',
+                    maxHeight: 30,
                     transition: 'all 0.5s ease-out',
                     transform: message.showAgeSexSelector ? 'translateY(0)' : 'translateY(-20px)',
                     opacity: message.showAgeSexSelector ? 1 : 0
@@ -535,8 +565,21 @@ const Chatbot = () => {
                           AGE_SEX_OPTIONS.find(cat => cat.items.includes(option))?.category || ''
                         }
                         renderInput={(params) => (
-                          <TextField {...params} label="Select Age and Sex" variant="outlined" />
+                          <TextField
+                            {...params}
+                            label="Select Age & Sex"
+                            variant="outlined"
+                            size="small"
+                            InputLabelProps={{
+                              style: { fontSize: '0.75rem', paddingTop: 2.5 }
+                            }}
+                          />
                         )}
+                        ListboxProps={{
+                          sx: {
+                            fontSize: '0.75rem' // Set the desired font size for all options here.
+                          }
+                        }}
                         onChange={(_, value) => handleAgeGenderSelect(value)}
                         fullWidth
                       />
@@ -555,74 +598,130 @@ const Chatbot = () => {
                 </Grow>
               )}
               {message.showWeightInput && (
-                <Grow in={message.showWeightInput} timeout={500}>
-                  <Box sx={{ 
-                    mt: 1, 
-                    width: '100%',
-                    transition: 'all 0.5s ease-out',
-                    transform: message.showWeightInput ? 'translateY(0)' : 'translateY(-20px)',
-                    opacity: message.showWeightInput ? 1 : 0
-                  }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <TextField
-                          label="Weight"
-                          type="number"
-                          value={inputValue}
-                          onChange={(e) => setInputValue(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleWeightSubmit(inputValue, weightUnit)}
-                          size="small"
-                          sx={{ flex: 1 }}
-                        />
-                        <FormControl size="small" sx={{ minWidth: 80 }}>
-                          <Select
-                            value={weightUnit}
-                            onChange={(e) => setWeightUnit(e.target.value as 'kg' | 'lb')}
-                          >
-                            <MenuItem value="kg">kg</MenuItem>
-                            <MenuItem value="lb">lb</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <IconButton 
-                          color="primary" 
-                          onClick={() => handleWeightSubmit(inputValue, weightUnit)}
-                        >
-                          <SendIcon />
-                        </IconButton>
-                      </Box>
-                      {message.showSkipButton && (
-                        <Button
-                          variant="text"
-                          size="small"
-                          onClick={handleSkipWeight}
-                          sx={{ alignSelf: 'flex-end' }}
-                        >
-                          Skip
-                        </Button>
-                      )}
-                    </Box>
-                  </Box>
-                </Grow>
-              )}
+  <Grow in={message.showWeightInput} timeout={500}>
+    <Box
+      sx={{ 
+        mt: 1, 
+        width: '100%',
+        display: 'flex',
+        maxHeight: 30,
+        transition: 'all 0.5s ease-out',
+        transform: message.showWeightInput ? 'translateY(0)' : 'translateY(-20px)',
+        opacity: message.showWeightInput ? 1 : 0
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            label="Weight"
+            type="number"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={(e) =>
+              e.key === 'Enter' && handleWeightSubmit(inputValue, weightUnit)
+            }
+            size="small"
+            sx={{
+              flex: 1,
+              '& .MuiOutlinedInput-root': {
+                height: '30px', // sets the overall height
+                '& input': {
+                  padding: '4px' // adjust inner padding for consistency
+                }
+              }
+            }}
+            InputLabelProps={{
+              sx: { fontSize: '0.75rem' } // sets the label font size
+            }}
+          />
+          <FormControl
+            size="small"
+            sx={{
+              minWidth: 80,
+              '& .MuiOutlinedInput-root': {
+                height: '30px'
+              }
+            }}
+          >
+            <Select
+              value={weightUnit}
+              onChange={(e) => setWeightUnit(e.target.value as 'kg' | 'lb')}
+              sx={{
+                height: '30px',
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',    // centers vertically
+                justifyContent: 'center', // centers horizontally
+                '& .MuiSelect-select': {
+                  padding: '4px',
+                  textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.75rem'
+                }
+              }}
+            >
+              <MenuItem value="kg" sx={{ fontSize: '0.75rem' }}>
+                kg
+              </MenuItem>
+              <MenuItem value="lb" sx={{ fontSize: '0.75rem' }}>
+                lb
+              </MenuItem>
+            </Select>
+          </FormControl>
+          <IconButton 
+            color="primary" 
+            onClick={() => handleWeightSubmit(inputValue, weightUnit)}
+          >
+            <SendIcon />
+          </IconButton>
+        </Box>
+        {message.showSkipButton && (
+          <Button
+            variant="text"
+            size="small"
+            onClick={handleSkipWeight}
+            sx={{ alignSelf: 'flex-end' }}
+          >
+            Skip
+          </Button>
+        )}
+      </Box>
+    </Box>
+  </Grow>
+)}
+
               {message.showCartonsInput && (
                 <Grow in={message.showCartonsInput} timeout={500}>
-                  <Box sx={{ 
-                    mt: 1, 
-                    width: '100%', 
-                    display: 'flex', 
-                    gap: 1,
-                    transition: 'all 0.5s ease-out',
-                    transform: message.showCartonsInput ? 'translateY(0)' : 'translateY(-20px)',
-                    opacity: message.showCartonsInput ? 1 : 0
-                  }}>
+                  <Box
+                    sx={{ 
+                      mt: 1, 
+                      width: '100%', 
+                      maxHeight: 30,
+                      display: 'flex', 
+                      gap: 1,
+                      transition: 'all 0.5s ease-out',
+                      transform: message.showCartonsInput ? 'translateY(0)' : 'translateY(-20px)',
+                      opacity: message.showCartonsInput ? 1 : 0
+                    }}
+                  >
                     <TextField
-                      label="Cartons per day"
+                      label={getInputLabel()}
                       type="number"
                       value={cartonsInput}
                       onChange={(e) => setCartonsInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleCartonsSubmit(cartonsInput)}
                       size="small"
-                      sx={{ flex: 1 }}
+                      sx={{
+                        flex: 1,
+                        '& .MuiOutlinedInput-root': {
+                          height: '33px', 
+                        }
+                      }}
+                      InputLabelProps={{
+                        sx: { fontSize: '0.75rem' }
+                      }}
                     />
                     <IconButton 
                       color="primary" 
