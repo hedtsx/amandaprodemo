@@ -1,11 +1,11 @@
 export type Product = string;
 
-export type CalculationMethod = 'Calories/Day' | 'Volume/Day' | 'Cartons/Day';
+export type CalculationMethod = "Calories/Day" | "Volume/Day" | "Cartons/Day";
 
 export type AgeGender = string;
 
 export interface ChatMessage {
-  type: 'bot' | 'user';
+  type: "bot" | "user";
   content: string;
   options?: string[];
   showProductSelector?: boolean;
@@ -23,9 +23,12 @@ export interface ChatMessage {
 }
 
 export interface CalculationResult {
+  calculatedCartonsPerDay: number;
   totalDailyVolume: number;
   totalDailyCalories: number;
   totalDailyProtein: number;
+  kcalsPerKg?: number;
+  proteinPerKg?: number;
 }
 
 export interface UserInput {
@@ -44,4 +47,4 @@ export interface ProductCategory {
 export interface AgeGroup {
   category: string;
   items: string[];
-} 
+}
