@@ -14,6 +14,12 @@ import {
   FormControl,
   Grow,
   Tooltip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
@@ -25,6 +31,8 @@ import {
   CalculationResult,
 } from "../types";
 import { products as importedProductsData } from "../services/products";
+import { driData, driTableNutrientOrder } from "../services/driData";
+import { AgeSexDRIs, DisplayNutrientDetail } from "../types";
 
 // Enhanced product list
 interface ProductOption {
@@ -305,6 +313,241 @@ const Chatbot = () => {
     setCurrentStep((prev) => prev + 1);
   };
 
+  const convertToBaseUnit = (
+    value: number,
+    unit: string | undefined,
+    targetNutrientKey: string
+  ): { value: number; unit: string } | null => {
+    if (unit === undefined) return null;
+    const lowerUnit = unit.toLowerCase();
+    const targetDisplayInfo = driTableNutrientOrder.find(
+      (n) => n.key === targetNutrientKey
+    );
+    const targetDisplayUnit =
+      targetDisplayInfo?.defaultUnit?.toLowerCase().split(" ")[0] || "";
+
+    // Simple direct unit matching if no specific conversion needed and units already align
+    if (lowerUnit.startsWith(targetDisplayUnit)) {
+      return { value, unit: targetDisplayInfo?.defaultUnit || unit }; // Return target display unit
+    }
+
+    // Add specific conversion logic here based on targetNutrientKey and units
+    // Example: Product data for Copper is in 'mg', DRI/Display is 'mcg'
+    if (
+      targetNutrientKey === "Copper" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+    if (
+      targetNutrientKey === "Copper" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+
+    if (
+      targetNutrientKey === "Selenium" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+    if (
+      targetNutrientKey === "Selenium" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+
+    if (
+      targetNutrientKey === "Chromium" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+    if (
+      targetNutrientKey === "Chromium" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+
+    if (
+      targetNutrientKey === "Manganese" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+    if (
+      targetNutrientKey === "Manganese" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+
+    if (
+      targetNutrientKey === "Vitamin K" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+    if (
+      targetNutrientKey === "Vitamin K" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+
+    if (
+      targetNutrientKey === "Biotin" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+    if (
+      targetNutrientKey === "Biotin" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+
+    if (
+      targetNutrientKey === "Iodine" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+    if (
+      targetNutrientKey === "Iodine" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+
+    if (
+      targetNutrientKey === "Molybdenum" &&
+      lowerUnit === "mg" &&
+      targetDisplayUnit === "mcg"
+    )
+      return { value: value * 1000, unit: "mcg" };
+    if (
+      targetNutrientKey === "Molybdenum" &&
+      lowerUnit === "mcg" &&
+      targetDisplayUnit === "mg"
+    )
+      return { value: value / 1000, unit: "mg" };
+
+    // Vitamin D: 1 mcg = 40 IU
+    if (targetNutrientKey === "Vitamin D (IU)") {
+      if (lowerUnit === "iu" && targetDisplayUnit === "mcg")
+        return { value: value / 40, unit: "mcg" };
+      if (lowerUnit === "mcg" && targetDisplayUnit === "iu")
+        return { value: value * 40, unit: "IU" };
+      if (lowerUnit === "iu" && targetDisplayUnit === "iu")
+        return { value: value, unit: "IU" }; // Ensure correct casing for display
+      if (lowerUnit === "mcg" && targetDisplayUnit === "mcg")
+        return { value: value, unit: "mcg" };
+    }
+
+    // Vitamin A: 1 IU retinol = 0.3 mcg RAE (This is a simplification)
+    if (targetNutrientKey === "Vitamin A (IU)") {
+      if (lowerUnit === "iu" && targetDisplayUnit === "mcg rae")
+        return { value: value * 0.3, unit: "mcg RAE" };
+      // Add reverse if needed, or if product data could be in mcg RAE
+      if (lowerUnit === "iu" && targetDisplayUnit === "iu")
+        return { value: value, unit: "IU" };
+    }
+
+    // If no specific conversion rule, return original value with its unit for logging/debugging
+    // Or, if units already match the targetDisplayUnit (ignoring case), return with targetDisplayUnit casing
+    if (lowerUnit.startsWith(targetDisplayUnit)) {
+      return { value, unit: targetDisplayInfo?.defaultUnit || unit };
+    }
+
+    console.warn(
+      `No conversion rule in convertToBaseUnit for ${targetNutrientKey} from ${unit} to display unit containing ${targetDisplayUnit}.`
+    );
+    return { value, unit: unit }; // Fallback: return original value and unit
+  };
+
+  const findNutrientInProduct = (
+    productNutritionalInfo: (typeof importedProductsData)[0]["nutritional_info"],
+    targetNutrientKey: string, // e.g., "Sodium", "Vitamin A (IU)" from driTableNutrientOrder
+    targetUnitFromDRIOrder: string // e.g., "mg", "mcg RAE" from driTableNutrientOrder.defaultUnit
+  ) => {
+    let foundProductNutrientInfo = null;
+    const normalizedTargetKey = targetNutrientKey.trim().toLowerCase();
+
+    // Attempt to find by direct match or common aliases
+    const nutrientAliases: { [key: string]: string[] } = {
+      "total carb.": ["carbohydrate", "total carbohydrate"],
+      "dietary fiber": ["fibre"],
+      "vitamin a (iu)": ["vitamin a"],
+      "vitamin d (iu)": ["vitamin d"],
+      // Add more aliases: "folate": ["folic acid", "total folates"] etc.
+    };
+
+    const keysToTry = [
+      normalizedTargetKey,
+      ...(nutrientAliases[normalizedTargetKey] || []),
+    ];
+
+    for (const key of keysToTry) {
+      const found = productNutritionalInfo.find(
+        (pNutrient) => pNutrient.Nutrition?.trim().toLowerCase() === key
+      );
+      if (found) {
+        foundProductNutrientInfo = found;
+        break;
+      }
+    }
+
+    if (foundProductNutrientInfo) {
+      const value100ml =
+        (foundProductNutrientInfo as any)["100 ml"] ||
+        (foundProductNutrientInfo as any)["100ml"];
+      const unit100ml = foundProductNutrientInfo.Units;
+
+      if (typeof value100ml === "number" && typeof unit100ml === "string") {
+        const converted = convertToBaseUnit(
+          value100ml,
+          unit100ml,
+          targetNutrientKey
+        ); // Pass targetNutrientKey for context
+
+        if (converted) {
+          // Check if the converted unit matches the base of targetUnitFromDRIOrder (e.g. mcg from mcg RAE)
+          const baseConvertedUnit = converted.unit.toLowerCase().split(" ")[0];
+          const baseTargetUnit = targetUnitFromDRIOrder
+            .toLowerCase()
+            .split(" ")[0];
+
+          if (baseConvertedUnit === baseTargetUnit) {
+            return {
+              valuePer100ml: converted.value,
+              unit: targetUnitFromDRIOrder,
+            }; // Use the full target unit for consistency
+          } else {
+            // If units still don't match after conversion (e.g., complex units like RAE not fully handled)
+            // Log this situation. For %DRI, this might be an issue. For display 'Amount', use what we have.
+            console.warn(
+              `Unit mismatch for ${targetNutrientKey} after conversion. Product converted to ${converted.unit}, target display unit ${targetUnitFromDRIOrder}. Using converted value for amount column.`
+            );
+            return { valuePer100ml: converted.value, unit: converted.unit }; // Return the unit from conversion
+          }
+        } else {
+          // Conversion function returned null (should not happen with current fallback)
+          console.error(
+            `Conversion returned null for ${targetNutrientKey} with unit ${unit100ml}`
+          );
+          return { valuePer100ml: value100ml, unit: unit100ml }; // Fallback to original product data
+        }
+      }
+    }
+    // console.log(`Nutrient ${targetNutrientKey} not found in product or data invalid.`);
+    return null;
+  };
+
   const calculateResults = (input: UserInput): CalculationResult => {
     const selectedProductData = importedProductsData.find(
       (p) => p.product_name === input.product
@@ -321,14 +564,14 @@ const Chatbot = () => {
     }
 
     // --- 1. Get "per carton" base values from Energy section ---
-    const energyObject = selectedProductData.nutritional_info[0]; // Assuming Energy (Cal) is always first
+    const energyObject = selectedProductData.nutritional_info[0];
     if (
       !energyObject ||
       energyObject.Nutrition !== "Energy" ||
       energyObject.Units !== "Cal"
     ) {
       console.error(
-        "Energy (Cal) information not found or not in expected position for:",
+        "Energy (Cal) info not found or not in expected position for:",
         input.product
       );
       return {
@@ -463,23 +706,107 @@ const Chatbot = () => {
       finalTotalDailyProtein = 0;
     }
 
-    // --- NEW: Calculate kcals/kg and protein/kg if weight is provided ---
     let kcalsPerKgResult: number | undefined = undefined;
     let proteinPerKgResult: number | undefined = undefined;
 
     if (input.weight && input.weight > 0) {
-      // input.weight is already in kg
       kcalsPerKgResult = finalTotalDailyCalories / input.weight;
-      kcalsPerKgResult = Math.round(kcalsPerKgResult * 10) / 10; // Round to 1 decimal place
-
+      kcalsPerKgResult = Math.round(kcalsPerKgResult * 10) / 10;
       proteinPerKgResult = finalTotalDailyProtein / input.weight;
-      proteinPerKgResult = Math.round(proteinPerKgResult * 10) / 10; // Round to 1 decimal place
-
-      // Handle potential NaN or Infinity if input.weight was somehow 0 or calculations went wrong
+      proteinPerKgResult = Math.round(proteinPerKgResult * 10) / 10;
       if (isNaN(kcalsPerKgResult) || !isFinite(kcalsPerKgResult))
         kcalsPerKgResult = undefined;
       if (isNaN(proteinPerKgResult) || !isFinite(proteinPerKgResult))
         proteinPerKgResult = undefined;
+    }
+
+    // --- DRI CALCULATION LOGIC ---
+    let driNutrientDetails: DisplayNutrientDetail[] = [];
+    if (input.ageGender && selectedProductData) {
+      const currentAgeSexDRIs: AgeSexDRIs | undefined =
+        driData[input.ageGender];
+      if (currentAgeSexDRIs) {
+        driNutrientDetails = driTableNutrientOrder.map((orderedNutrient) => {
+          const nutrientKeyInDRI = orderedNutrient.key;
+          const fullDisplayName =
+            orderedNutrient.displayName + (orderedNutrient.notesKey || "");
+          const targetDisplayUnit = orderedNutrient.defaultUnit || ""; // This is the unit for display for Amount and DRI columns
+
+          const driInfo = currentAgeSexDRIs[nutrientKeyInDRI];
+          const driValue = driInfo?.value;
+          // Use DRI unit if available, otherwise fallback to targetDisplayUnit (especially if DRI value is undefined)
+          const driUnitForCalc = driInfo?.unit || targetDisplayUnit;
+
+          let amountInVolume: number | string = "—";
+          let percentDRI: number | string = "—";
+          let actualAmountUnit = targetDisplayUnit; // Default to display unit
+
+          const productNutrientData = findNutrientInProduct(
+            selectedProductData.nutritional_info,
+            nutrientKeyInDRI,
+            targetDisplayUnit
+          );
+
+          if (
+            productNutrientData &&
+            typeof productNutrientData.valuePer100ml === "number" &&
+            finalTotalDailyVolume >= 0
+          ) {
+            // Allow 0 volume
+            const amountPer100ml = productNutrientData.valuePer100ml;
+            let calculatedAmount = 0;
+            if (finalTotalDailyVolume > 0) {
+              // Avoid division by zero if 100ml is 0 for some reason
+              calculatedAmount = (amountPer100ml / 100) * finalTotalDailyVolume;
+            }
+
+            // Use the unit from productNutrientData for the 'Amount' column as it reflects any conversions
+            actualAmountUnit = productNutrientData.unit;
+
+            if (calculatedAmount < 0.001 && calculatedAmount !== 0)
+              amountInVolume = parseFloat(calculatedAmount.toExponential(1));
+            else if (calculatedAmount < 1 && calculatedAmount !== 0)
+              amountInVolume = parseFloat(calculatedAmount.toFixed(2));
+            else if (calculatedAmount < 10 && calculatedAmount !== 0)
+              amountInVolume = parseFloat(calculatedAmount.toFixed(1));
+            else amountInVolume = Math.round(calculatedAmount);
+
+            if (
+              typeof driValue === "number" &&
+              driValue > 0 &&
+              typeof amountInVolume === "number"
+            ) {
+              // For %DRI calculation, ensure units are compatible.
+              // productNutrientData.unit should now be aligned with targetDisplayUnit by findNutrientInProduct
+              // driUnitForCalc is the unit of the DRI value.
+              const baseProductUnit = productNutrientData.unit
+                .toLowerCase()
+                .split(" ")[0];
+              const baseDRIUnit = driUnitForCalc.toLowerCase().split(" ")[0];
+
+              if (baseProductUnit === baseDRIUnit) {
+                const calculatedPercent = (amountInVolume / driValue) * 100;
+                percentDRI = Math.round(calculatedPercent);
+              } else {
+                console.warn(
+                  `Cannot calculate %DRI for ${nutrientKeyInDRI}: Amount unit ${productNutrientData.unit} vs DRI unit ${driUnitForCalc}`
+                );
+                percentDRI = "N/A";
+              }
+            }
+          }
+
+          return {
+            nutrient: fullDisplayName,
+            amount: amountInVolume,
+            dri: typeof driValue === "number" ? driValue : "—",
+            percentDri: percentDRI,
+            unit: actualAmountUnit, // Use the unit of the calculated 'amount' for display consistency with its value
+            // Or, consistently use targetDisplayUnit if all amounts are successfully converted to it.
+            // For now, using actualAmountUnit which comes from productNutrientData.unit
+          };
+        });
+      }
     }
 
     return {
@@ -487,8 +814,10 @@ const Chatbot = () => {
       totalDailyVolume: finalTotalDailyVolume,
       totalDailyCalories: finalTotalDailyCalories,
       totalDailyProtein: finalTotalDailyProtein,
-      kcalsPerKg: kcalsPerKgResult, // Add to return object
-      proteinPerKg: proteinPerKgResult, // Add to return object
+      kcalsPerKg: kcalsPerKgResult,
+      proteinPerKg: proteinPerKgResult,
+      driNutrients:
+        driNutrientDetails.length > 0 ? driNutrientDetails : undefined,
     };
   };
 
@@ -1291,6 +1620,189 @@ const Chatbot = () => {
                       </Box>
                     </Box>
                   )}
+                  {message.results.driNutrients &&
+                    message.results.driNutrients.length > 0 && (
+                      <Box sx={{ width: "100%", mt: 3, mb: 2 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            textAlign: "center",
+                            mb: 1,
+                            fontSize: "1.1rem",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          All Nutritional Details (
+                          {message.results.totalDailyVolume} mL)
+                        </Typography>
+                        <TableContainer
+                          component={Paper}
+                          elevation={1}
+                          sx={{
+                            maxHeight: 300,
+                            overflowY: "auto", // For vertical scroll
+                            overflowX: "hidden", // Add this line to hide horizontal overflow and scrollbar
+
+                            // WebKit scrollbar styling (for vertical scrollbar)
+                            "&::-webkit-scrollbar": {
+                              width: "6px",
+                            },
+                            "&::-webkit-scrollbar-track": {
+                              backgroundColor: "#f1f1f1",
+                              borderRadius: "3px",
+                            },
+                            "&::-webkit-scrollbar-thumb": {
+                              backgroundColor: "#c1c1c1",
+                              borderRadius: "3px",
+                              "&:hover": {
+                                backgroundColor: "#a8a8a8",
+                              },
+                            },
+                            // Firefox scrollbar styling (for vertical scrollbar)
+                            scrollbarWidth: "thin",
+                            scrollbarColor: "#c1c1c1 #f1f1f1",
+                          }}
+                        >
+                          <Table
+                            stickyHeader
+                            size="small"
+                            aria-label="dri nutritional details table"
+                          >
+                            <TableHead>
+                              <TableRow>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: "bold",
+                                    fontSize: "0.75rem",
+                                    py: 0.5,
+                                  }}
+                                >
+                                  Nutrient
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: "bold",
+                                    fontSize: "0.75rem",
+                                    py: 0.5,
+                                  }}
+                                >
+                                  Amount
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: "bold",
+                                    fontSize: "0.75rem",
+                                    py: 0.5,
+                                  }}
+                                >
+                                  DRI
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: "bold",
+                                    fontSize: "0.75rem",
+                                    py: 0.5,
+                                  }}
+                                >
+                                  % DRI
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {message.results.driNutrients.map(
+                                (nutrientDetail, index) => (
+                                  <TableRow
+                                    key={index}
+                                    sx={{
+                                      "&:last-child td, &:last-child th": {
+                                        border: 0,
+                                      },
+                                      "&:nth-of-type(odd)": {
+                                        // Apply to odd rows
+                                        backgroundColor:
+                                          "rgba(0, 140, 105, 0.09)", // Light green, adjust opacity as needed
+                                      },
+                                      // Optional: Hover effect
+                                      "&:hover": {
+                                        backgroundColor:
+                                          "rgba(0, 140, 105, 0.18)",
+                                      },
+                                    }}
+                                  >
+                                    <TableCell
+                                      component="th"
+                                      scope="row"
+                                      sx={{ fontSize: "0.75rem", py: 0.5 }}
+                                    >
+                                      {nutrientDetail.nutrient}
+                                    </TableCell>
+                                    <TableCell
+                                      align="right"
+                                      sx={{ fontSize: "0.75rem", py: 0.5 }}
+                                    >
+                                      {nutrientDetail.amount}
+                                      {typeof nutrientDetail.amount === "number"
+                                        ? ` ${
+                                            nutrientDetail.unit.split(" ")[0]
+                                          }`
+                                        : ""}
+                                    </TableCell>
+                                    <TableCell
+                                      align="right"
+                                      sx={{ fontSize: "0.75rem", py: 0.5 }}
+                                    >
+                                      {nutrientDetail.dri}
+                                      {typeof nutrientDetail.dri === "number"
+                                        ? ` ${
+                                            nutrientDetail.unit.split(" ")[0]
+                                          }`
+                                        : ""}
+                                    </TableCell>
+                                    <TableCell
+                                      align="right"
+                                      sx={{
+                                        fontSize: "0.75rem",
+                                        py: 0.5,
+                                        fontWeight:
+                                          typeof nutrientDetail.percentDri ===
+                                            "number" &&
+                                          nutrientDetail.percentDri >= 100
+                                            ? "bold"
+                                            : "normal",
+                                      }}
+                                    >
+                                      {nutrientDetail.percentDri}
+                                      {typeof nutrientDetail.percentDri ===
+                                      "number"
+                                        ? "%"
+                                        : ""}
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                        {/* Optional: Add footnotes for RAE* and DFE** here if needed */}
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          sx={{ mt: 1, fontSize: "0.65rem", textAlign: "left" }}
+                        >
+                          *Retinol Activity Equivalents (RAE)
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          sx={{ fontSize: "0.65rem", textAlign: "left" }}
+                        >
+                          **Dietary Folate Equivalents (DFE)
+                        </Typography>
+                      </Box>
+                    )}
                   <Box
                     sx={{
                       display: "flex",

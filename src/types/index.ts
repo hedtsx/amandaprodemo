@@ -48,3 +48,36 @@ export interface AgeGroup {
   category: string;
   items: string[];
 }
+
+export interface NutrientDRI {
+  value?: number; // DRI value; optional if some nutrients don't have a DRI
+  unit: string; // e.g., "mg", "mcg", "g"
+}
+
+export interface AgeSexDRIs {
+  [nutrientName: string]: NutrientDRI;
+}
+
+export interface AllDRIData {
+  [ageSexGroup: string]: AgeSexDRIs;
+}
+
+// For the final table display
+export interface DisplayNutrientDetail {
+  nutrient: string;
+  amount: string | number; // Amount in finalTotalDailyVolume
+  dri: string | number; // DRI value from driData
+  percentDri: string | number; // Calculated %DRI
+  unit: string; // The unit for display for amount and DRI
+  notes?: string; // For things like RAE*, DFE**
+}
+
+export interface CalculationResult {
+  calculatedCartonsPerDay: number;
+  totalDailyVolume: number;
+  totalDailyCalories: number;
+  totalDailyProtein: number;
+  kcalsPerKg?: number;
+  proteinPerKg?: number;
+  driNutrients?: DisplayNutrientDetail[]; // Add this line
+}
